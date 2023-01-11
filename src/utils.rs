@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+#![allow(unused)]
 
 use std::{
     ffi::{OsStr, OsString},
@@ -11,6 +12,13 @@ use windows_sys::Win32::{
     Globalization::{lstrcpyW, lstrcpynW},
     System::Memory::{GlobalAlloc, GlobalFree, GPTR},
 };
+
+#[derive(Debug)]
+pub enum Error {
+    DecodeWideString,
+    StackIsNull,
+    IntParse,
+}
 
 static mut G_STRINGSIZE: u32 = 0;
 static mut G_VARIABLES: *mut wchar_t = std::ptr::null_mut();
@@ -31,38 +39,57 @@ pub struct stack_t {
     text: [wchar_t; 1],
 }
 
-pub unsafe fn pushstring(s: impl AsRef<OsStr>) {
+pub unsafe fn pushstring(s: impl AsRef<OsStr>) -> Result<(), Error> {
     if G_STACKTOP.is_null() {
-        return;
+        return Err(Error::StackIsNull);
     }
 
     let string_wide = encode_wide(s);
+
     let th: *mut stack_t = GlobalAlloc(
         GPTR,
         size_of::<stack_t>() + G_STRINGSIZE as usize * size_of_val(&string_wide),
     ) as _;
+
     lstrcpynW(
         (*th).text.as_ptr() as _,
         string_wide.as_ptr() as _,
         G_STRINGSIZE as _,
     );
+
     (*th).next = *G_STACKTOP;
     *G_STACKTOP = th;
+
+    Ok(())
 }
 
-pub unsafe fn popstring() -> Result<String, ()> {
+pub unsafe fn popstring() -> Result<String, Error> {
     if G_STACKTOP.is_null() || (*G_STACKTOP).is_null() {
-        return Err(());
+        return Err(Error::StackIsNull);
     }
 
-    let mut string_wide: Vec<u16> = vec![0; G_STRINGSIZE as _];
     let th: *mut stack_t = *G_STACKTOP;
+
+    let mut string_wide: Vec<u16> = vec![0; G_STRINGSIZE as _];
     lstrcpyW(string_wide.as_mut_ptr(), (*th).text.as_ptr() as _);
-    let string = decode_wide(&string_wide).to_str().ok_or(())?.to_string();
+
     *G_STACKTOP = (*th).next;
+
     GlobalFree(th as _);
 
-    Ok(string)
+    Ok(decode_wide(&string_wide)
+        .to_str()
+        .ok_or(Error::DecodeWideString)?
+        .to_string())
+}
+
+pub unsafe fn popint() -> Result<i32, Error> {
+    let int = popstring().map(|i| i.parse().map_err(|_| Error::IntParse))??;
+    Ok(int)
+}
+
+pub unsafe fn pushint(int: i32) -> Result<(), Error> {
+    pushstring(int.to_string())
 }
 
 fn encode_wide(string: impl AsRef<OsStr>) -> Vec<u16> {

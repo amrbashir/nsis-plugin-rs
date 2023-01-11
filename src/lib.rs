@@ -13,5 +13,5 @@ pub unsafe extern "C" fn greet(
     exdll_init(string_size, variables, stacktop);
 
     let name = popstring().unwrap();
-    pushstring(format!("Hello {}!", name));
+    pushstring(format!("Hello {}!", name)).unwrap();
 }
