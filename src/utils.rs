@@ -2,7 +2,7 @@
 #![allow(unused)]
 
 use std::{
-    ffi::{OsStr, OsString},
+    ffi::{c_int, OsStr, OsString},
     iter::once,
     mem::{size_of, size_of_val},
     os::windows::prelude::{OsStrExt, OsStringExt},
@@ -20,17 +20,17 @@ pub enum Error {
     IntParse,
 }
 
-static mut G_STRINGSIZE: u32 = 0;
+static mut G_STRINGSIZE: c_int = 0;
 static mut G_VARIABLES: *mut wchar_t = std::ptr::null_mut();
 static mut G_STACKTOP: *mut *mut stack_t = std::ptr::null_mut();
 
-pub unsafe fn exdll_init(string_size: u32, variables: *mut wchar_t, stacktop: *mut *mut stack_t) {
+pub unsafe fn exdll_init(string_size: c_int, variables: *mut wchar_t, stacktop: *mut *mut stack_t) {
     G_STRINGSIZE = string_size;
     G_VARIABLES = variables;
     G_STACKTOP = stacktop;
 }
 
-pub type wchar_t = i32;
+pub type wchar_t = c_int;
 
 #[repr(C)]
 #[derive(Debug)]
