@@ -6,21 +6,21 @@ use windows_sys::Win32::System::Memory::{
 };
 
 #[global_allocator]
-static WIN32_STD_ALLOCATOR: Heapalloc = Heapalloc;
+static WIN32_ALLOCATOR: Heapalloc = Heapalloc;
 
 pub struct Heapalloc;
 
 unsafe impl GlobalAlloc for Heapalloc {
-    unsafe fn alloc(&self, _layout: Layout) -> *mut u8 {
-        HeapAlloc(GetProcessHeap(), 0, _layout.size()) as *mut u8
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        HeapAlloc(GetProcessHeap(), 0, layout.size()) as *mut u8
     }
 
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
         HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, layout.size()) as *mut u8
     }
 
-    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
-        HeapFree(GetProcessHeap(), 0, _ptr as *mut c_void);
+    unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
+        HeapFree(GetProcessHeap(), 0, ptr as *mut c_void);
     }
 
     unsafe fn realloc(&self, ptr: *mut u8, _layout: Layout, new_size: usize) -> *mut u8 {

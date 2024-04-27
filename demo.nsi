@@ -7,9 +7,6 @@ Unicode true
 !addplugindir "./target/i686-pc-windows-msvc\release"
 !addplugindir "$%CARGO_TARGET_DIR%/i686-pc-windows-msvc\release"
 !addplugindir "$%CARGO_BUILD_TARGET_DIR%/i686-pc-windows-msvc\release"
-!addplugindir "./target/i686-pc-windows-msvc\debug"
-!addplugindir "$%CARGO_TARGET_DIR%/i686-pc-windows-msvc\debug"
-!addplugindir "$%CARGO_BUILD_TARGET_DIR%/i686-pc-windows-msvc\debug"
 
 Section
     nsis_plugin::greet "NSIS"
